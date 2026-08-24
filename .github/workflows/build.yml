@@ -1,0 +1,59 @@
+name: Build GreatJourney APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "great_journey.zip"
+      - ".github/workflows/build.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract Flutter project
+        run: |
+          unzip -q great_journey.zip
+          ls -la
+          ls -la great_journey
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Generate Android project
+        working-directory: great_journey
+        run: |
+          flutter create --platforms=android .
+
+      - name: Get Flutter packages
+        working-directory: great_journey
+        run: |
+          flutter pub get
+
+      - name: Generate app icon
+        working-directory: great_journey
+        run: |
+          dart run flutter_launcher_icons
+
+      - name: Build APK
+        working-directory: great_journey
+        run: |
+          flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: GreatJourney-APK
+          path: great_journey/build/app/outputs/flutter-apk/app-release.apk
